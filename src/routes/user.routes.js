@@ -3,6 +3,8 @@ import { registerUser } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 const router = Router();
 
+console.log(registerUser,"register")
+
 router.route("/register").post(
     upload.fields([
         {

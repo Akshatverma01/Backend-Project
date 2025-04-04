@@ -1,5 +1,5 @@
 const asyncHandler=(requestHandler)=>{
-    (req,res,next)=>{
+   return (req,res,next)=>{
         Promise.resolve(requestHandler(req,res,next)).
         catch((err)=>next(err))
     }
@@ -8,14 +8,6 @@ const asyncHandler=(requestHandler)=>{
 
 
 export {asyncHandler}
-
-
-
-
-
-
-
-
 
 // Higher order function: accept a funtion and return a function
 

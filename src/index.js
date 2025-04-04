@@ -1,35 +1,28 @@
 import connectDB from "./db/index.js";
 import dotenv from "dotenv";
-import express from "express";
+import app from "./app.js";
 
-const app = express();
-dotenv.config();
+// Correct dotenv path
+dotenv.config({
+  path: "./.env",
+});
+
+// Validate PORT environment variable
+if (!process.env.PORT) {
+  console.error("Error: PORT is not defined in the environment variables.");
+}
 
 connectDB()
-.then(()=>{
-    app.on("error",(error)=>{
-        console.error(`Error: ${error}`); 
-        throw new Error(error);
-    })
-    app.listen(process.env.PORT||8000,()=>{
-        console.log("Server is running on port "+process.env.PORT);
-    })
-})
-.catch((error)=>{
-    console.log("Mongoose connection error: ", error);
-})
-
-
-
-
- 
-
-
-
-
-
-
-
+  .then(() => {
+    const port = process.env.PORT || 8000; // Use fallback port
+    app.listen(port, () => {
+      console.log("Server is running on port " + port); // Log the actual port
+    });
+  })
+  .catch((error) => {
+    console.error("Mongoose connection error: ", error);
+    process.exit(1);
+  });
 
 // Iffy method
 // import express from "express";
