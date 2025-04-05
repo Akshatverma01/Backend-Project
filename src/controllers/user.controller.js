@@ -221,13 +221,141 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .cookie("accessToken", accessToken)
       .cookie("refreshToken", newRefreshToken)
       .json(
-        new ApiResponse(200,
-           { accessToken, refreshToken: newRefreshToken },
-          "Access Token refeshed successfully.")
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access Token refeshed successfully."
+        )
       );
   } catch (error) {
-    throw new ApiError(500,  error?.message ||"Invalid Refresh Token" );
+    throw new ApiError(500, error?.message || "Invalid Refresh Token");
   }
 });
 
-export { registerUser, loginUser, logoutUser,refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const user = User.findById(req?.user?._id || "");
+    if (!user) {
+      throw new ApiError(401, "User nnot found!");
+    }
+    const isValidPassword = await bcrypt.compare(oldPassword, user?.password);
+    if (!isValidPassword) {
+      throw new ApiError(401, "Invalid Old Password");
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Password changed successfully."));
+  } catch (error) {
+    throw new ApiError(500, error?.message || "Internal server error");
+  }
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  try {
+    const user = req?.user;
+  } catch (error) {
+    throw new ApiError(500, error?.message || "Internal server error");
+  }
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  try {
+    const { fullName, email } = req.body;
+
+    if (!(fullName || email)) {
+      throw new ApiError(400, "All fields are required.");
+    }
+    const user = User.findByIdAndUpdate(
+      req?.user?._id,
+      {
+        $set: {
+          fullName: fullName,
+          email: email,
+        },
+      },
+      { new: true }
+    ).select("-password");
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Account details updated successfully."));
+  } catch (error) {
+    throw new ApiError(500, error?.message || "Internal server error");
+  }
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  try {
+    console.log(req.files);
+    const avatarLocalPath = req?.files?.path;
+
+    if(!avatarLocalPath) {
+      throw new ApiError(400, "No file uploaded");
+    }
+    const avatar= await cloudinary.uploader.upload(avatarLocalPath);
+
+    if(!avatar?.url){
+      throw new ApiError(400, "Failed to upload avatar");
+    }
+    const user = User.findByIdAndUpdate(
+      req?.user?._id,
+      {
+        $set: {
+          avatar: avatar?.url,
+        }
+      },
+      {new:true}
+    ).select("-password");
+
+    return res.status(200).json(new ApiResponse(200, user, "Avatar updated successfully."))
+  } catch (error) {
+    throw new ApiError(500, error?.message || "Internal server error");
+  }
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  try {
+    console.log(req.files);
+    const coverImageLocalpath = req?.files?.path;
+
+    if(!coverImageLocalpath) {
+      throw new ApiError(400, "No file uploaded");
+    }
+    const coverImage = await cloudinary.uploader.upload(coverImageLocalpath);
+
+    if(!coverImage?.url){
+      throw new ApiError(400, "Failed to upload avatar");
+    }
+    const user = User.findByIdAndUpdate(
+      req?.user?._id,
+      {
+        $set: {
+          coverImage: coverImage?.url,
+        }
+      },
+      {new:true}
+    ).select("-password");
+
+    return res.status(200).json(new ApiResponse(200, user, "Cover Image updated successfully."))
+  } catch (error) {
+    throw new ApiError(500, error?.message || "Internal server error");
+  }
+});
+  
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage
+};
